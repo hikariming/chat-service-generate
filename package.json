@@ -1,0 +1,24 @@
+{
+  "name": "chat-service-generate",
+  "version": "1.0.0",
+  "description": "A command-line tool designed to swiftly generate initialization database files and CRUD codes for chat services",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hikariming/chat-service-generate.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/hikariming/chat-service-generate/issues"
+  },
+  "homepage": "https://github.com/hikariming/chat-service-generate#readme",
+  "dependencies": {
+    "@nestjs/cli": "^10.1.12",
+    "inquirer": "^9.2.10"
+  }
+}
