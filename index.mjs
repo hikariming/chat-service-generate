@@ -5,55 +5,55 @@ import { generateMongoSchema,generateCRUD } from './src/currproj.mjs';
 import { checkAndPromptForAPIKey } from './src/openaikey.mjs';
 
 async function main() {
-    await checkAndPromptForAPIKey();  // 在执行其他操作之前检查和提示API key
+    await checkAndPromptForAPIKey();  // Check and prompt for API key before executing other operations
     const inquirer = await import('inquirer').then(module => module.default);
 
     const questions = [
         {
             type: 'list',
             name: 'usageMode',
-            message: '选择您的使用模式 please choose:',
-            choices: ['新建项目(new project)', '在现有项目中使用(using in existing project)'],
-            default: '在现有项目中使用(using in existing project)'
+            message: 'Please choose mode(选择您的使用模式):',
+            choices: ['New project(新建项目)', 'Use in existing project(在现有项目中使用)'],
+            default: 'Use in existing project(在现有项目中使用)'
         },
         {
             type: 'input',
             name: 'projectDescription',
-            message: '请描述这个新项目 (Please describe the new project):',
-            when: answers => answers.usageMode === '新建项目(new project)'
+            message: 'Describe the new project(请描述这个新项目):',
+            when: answers => answers.usageMode === 'New project(新建项目)'
         },
         {
             type: 'list',
             name: 'framework',
-            message: '选择您的架构:',
+            message: 'Choose your framework(选择您的架构):',
             choices: ['nestjs+mongo'],
             default: 'nestjs+mongo',
-            when: answers => answers.usageMode === '在现有项目中使用(using in existing project)'
+            when: answers => answers.usageMode === 'Use in existing project(在现有项目中使用)'
         },
         {
             type: 'list',
             name: 'ChooseFunction',
-            message: '选择您的功能:',
-            choices: ['生成mongo schema','生成CRUD接口'],
+            message: 'Choose your function(选择您的功能):',
+            choices: ['Generate mongo schema(生成mongo schema)', 'Generate CRUD API(生成CRUD接口)'],
             default: true,
-            when: answers => answers.usageMode === '在现有项目中使用(using in existing project)'
+            when: answers => answers.usageMode === 'Use in existing project(在现有项目中使用)'
         }
     ];
 
     const answers = await inquirer.prompt(questions);
     console.log(answers);
-    // 根据用户的选择进行操作
+    // Act based on the user's choice
     switch (answers.usageMode) {
-        case '新建项目(new project)':
-            // 如果是新项目，可能还需要询问其他问题
+        case 'New project(新建项目)':
+            // If it's a new project, you might need to ask other questions
             createNewProject(answers);
             break;
-        case '在现有项目中使用(using in existing project)':
+        case 'Use in existing project(在现有项目中使用)':
             switch (answers.ChooseFunction) {
-                case '生成mongo schema':
+                case 'Generate mongo schema(生成mongo schema)':
                     generateMongoSchema(answers);
                     break;
-                case '生成CRUD接口':
+                case 'Generate CRUD API(生成CRUD接口)':
                     generateCRUD(answers);
                     break;
             }
