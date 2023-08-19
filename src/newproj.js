@@ -1,12 +1,10 @@
 import { execSync } from 'child_process';
 import { config } from 'dotenv';
 import { ENV_FILE_PATH } from './openaikey.js';
-import OpenAIApi from 'openai';
+import OpenAI from 'openai';
 
 config({ path: ENV_FILE_PATH });
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-
-
 
 export async function createNewProject(answers) {
     console.log('Creating new project...');
@@ -23,20 +21,31 @@ export async function createNewProject(answers) {
         throw new Error("No OpenAI API key found. Please make sure it's defined in your .env file.");
     }
     
-    const openai = new OpenAIApi({
-      key: OPENAI_API_KEY
+    const openai = new OpenAI({
+      apiKey: OPENAI_API_KEY
     });
 
     try {
-        const gptResponse = await openai.complete({
-            prompt: `We want create a new nestjs project,please Generate terminal command based on the project description: ${answers.projectDescription}`,
-            max_tokens: 500  // 你可以根据需要调整这个
+        console.log('Start to chat with GPT...');
+        const gptResponse = await openai.chat.completions.create({
+            messages: [
+                {
+                    role: 'system',
+                    content: 'You are a helpful assistant.'
+                },
+                {
+                    role: 'user',
+                    content: `We want to create a new NestJS project. Generate a terminal command based on the project description: ${answers.projectDescription}`
+                }
+            ],
+            model: 'gpt-3.5-turbo', // 使用适当的模型
         });
+        console.log('GPT response:', gptResponse);
     
-        if (gptResponse && gptResponse.choices && gptResponse.choices[0] && gptResponse.choices[0].text) {
-            const generatedCommand = gptResponse.choices[0].text.trim();
+        if (gptResponse.choices && gptResponse.choices[0] && gptResponse.choices[0].message) {
+            const generatedCommand = gptResponse.choices[0].message.content.trim();
             console.log('Generated command:', generatedCommand);
-    
+
             // 询问用户是否要运行此命令
             const confirmation = await inquirer.prompt([{
                 type: 'confirm',
@@ -57,10 +66,9 @@ export async function createNewProject(answers) {
             }
     
         } else {
-            console.error('Error fetching response from GPT-4.');
+            console.error('Error fetching response from OpenAI.');
         }
     } catch (error) {
-        console.error('Error calling OpenAI GPT-4:', error);
+        console.error('Error calling OpenAI:', error);
     }
-    
 }
