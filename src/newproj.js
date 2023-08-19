@@ -2,9 +2,12 @@ import { execSync } from 'child_process';
 import { config } from 'dotenv';
 import { ENV_FILE_PATH } from './openaikey.js';
 import OpenAI from 'openai';
+import { HttpsProxyAgent } from 'https-proxy-agent'; // 使用HttpsProxyAgent而不是HttpProxyAgent
+
 
 config({ path: ENV_FILE_PATH });
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const PROXY_URL = 'http://127.0.0.1:1087'; // 你的代理地址
 
 export async function createNewProject(answers) {
     console.log('Creating new project...');
@@ -20,10 +23,14 @@ export async function createNewProject(answers) {
     if (!OPENAI_API_KEY) {
         throw new Error("No OpenAI API key found. Please make sure it's defined in your .env file.");
     }
-    
+    const agent = new HttpsProxyAgent(PROXY_URL);
+
     const openai = new OpenAI({
-      apiKey: OPENAI_API_KEY
+      apiKey: OPENAI_API_KEY,
+      httpAgent: agent // 将代理agent传递给OpenAI SDK
+
     });
+
 
     try {
         console.log('Start to chat with GPT...');

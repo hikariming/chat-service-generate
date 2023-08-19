@@ -21,6 +21,8 @@
   "dependencies": {
     "@nestjs/cli": "^10.1.12",
     "dotenv": "^16.3.1",
+    "http-proxy-agent": "^7.0.0",
+    "https-proxy-agent": "^7.0.1",
     "inquirer": "^9.2.10",
     "openai": "^4.0.1"
   }
