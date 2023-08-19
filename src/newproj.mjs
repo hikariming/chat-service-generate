@@ -1,6 +1,6 @@
 import { execSync } from "child_process";
 import { config } from "dotenv";
-import { ENV_FILE_PATH } from "./openaikey.js";
+import { ENV_FILE_PATH } from "./openaikey.mjs";
 import OpenAI from "openai";
 import { HttpsProxyAgent } from "https-proxy-agent"; // 使用HttpsProxyAgent而不是HttpProxyAgent
 import { spawn } from "child_process";
@@ -45,7 +45,7 @@ export async function createNewProject(answers) {
         },
         {
           role: "user",
-          content: `Given a project description "${answers.projectDescription}", generate a shell command for creating a new NestJS project. The expected command format is "npx @nestjs/cli new PROJECT_NAME  --skip-install". Please infer the PROJECT_NAME from the given project description.`,
+          content: `Given a project description "${answers.projectDescription}", generate a shell command for creating a new NestJS project. The expected command format is " \`\`\` npx @nestjs/cli new PROJECT_NAME  --skip-install". Please infer the PROJECT_NAME from the given project description.\`\`\``,
         },
       ],
       model: "gpt-3.5-turbo", // 使用适当的模型

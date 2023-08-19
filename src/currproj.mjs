@@ -3,7 +3,7 @@
 import { HttpsProxyAgent } from "https-proxy-agent";
 import { config } from "dotenv";
 import OpenAI from "openai";
-import { ENV_FILE_PATH } from "./openaikey.js";
+import { ENV_FILE_PATH } from "./openaikey.mjs";
 import fs from 'fs';
 
 config({ path: ENV_FILE_PATH });
