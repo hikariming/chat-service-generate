@@ -5,7 +5,7 @@ import { join, dirname } from 'path';
 // 使用 import.meta.url 获取当前文件的URL，然后转换为文件路径
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const ENV_FILE_PATH = join(__dirname, '.env');  // 使用这个路径
+export const ENV_FILE_PATH = join(__dirname, '.env');
 
 export async function checkAndPromptForAPIKey() {
     const inquirer = await import('inquirer').then(module => module.default);
