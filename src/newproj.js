@@ -38,12 +38,13 @@ export async function createNewProject(answers) {
             messages: [
                 {
                     role: 'system',
-                    content: 'You are a helpful assistant.'
+                    content: 'You are a helpful assistant that generates shell commands for creating NestJS projects.'
                 },
                 {
                     role: 'user',
-                    content: `We want to create a new NestJS project. Generate a terminal command based on the project description: ${answers.projectDescription}`
+                    content: `Given a project description "${answers.projectDescription}", generate a shell command for creating a new NestJS project. I want the command to look like this: "npx @nestjs/cli new PROJECT_NAME --description DESCRIPTION --author AUTHOR --email EMAIL". Please infer the PROJECT_NAME, DESCRIPTION, AUTHOR, and EMAIL from the given project description.`
                 }
+                
             ],
             model: 'gpt-3.5-turbo', // 使用适当的模型
         });
@@ -52,6 +53,7 @@ export async function createNewProject(answers) {
         if (gptResponse.choices && gptResponse.choices[0] && gptResponse.choices[0].message) {
             const generatedCommand = gptResponse.choices[0].message.content.trim();
             console.log('Generated command:', generatedCommand);
+            const inquirer = await import('inquirer').then(module => module.default);
 
             // 询问用户是否要运行此命令
             const confirmation = await inquirer.prompt([{
