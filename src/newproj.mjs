@@ -45,7 +45,7 @@ export async function createNewProject(answers) {
         },
         {
           role: "user",
-          content: `Given a project description "${answers.projectDescription}", generate a shell command for creating a new NestJS project. The expected command format is " \`\`\` npx @nestjs/cli new PROJECT_NAME  --skip-install". Please infer the PROJECT_NAME from the given project description.\`\`\``,
+          content: `Given a project description "${answers.projectDescription}", generate a shell command for creating a new NestJS project. The expected command format is " \`\`\` npx @nestjs/cli new PROJECT_NAME". Please infer the PROJECT_NAME from the given project description.\`\`\``,
         },
       ],
       model: "gpt-3.5-turbo", // 使用适当的模型
@@ -60,7 +60,7 @@ export async function createNewProject(answers) {
       const generatedCommand = gptResponse.choices[0].message.content.trim();
       console.log("Generated command:", generatedCommand);
       // 使用正则表达式匹配命令字符串
-      const commandPattern = /```([\s\S]*?)```/; // 这个正则表达式会捕获在三个反引号之间的任何内容
+      const commandPattern = /```(?:shell|bash)?\s*([\s\S]*?)```/;
       const matches = generatedCommand.match(commandPattern);
 
       if (matches && matches[1]) {
