@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "type": "module",
   "description": "A command-line tool designed to swiftly generate initialization database files and CRUD codes for chat services",
+  "bin": {
+    "chatgen": "./index.js"
+  },
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -12,8 +15,8 @@
     "url": "git+https://github.com/hikariming/chat-service-generate.git"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "hikariming",
+  "license": "LGPL-3.0-or-later",
   "bugs": {
     "url": "https://github.com/hikariming/chat-service-generate/issues"
   },
