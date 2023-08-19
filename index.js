@@ -1,8 +1,9 @@
 import { createNewProject } from './src/newproj.js';
 import { generateMongoSchema,generateCRUD } from './src/currproj.js';
-
+import { checkAndPromptForAPIKey } from './src/openaikey.js';
 
 async function main() {
+    await checkAndPromptForAPIKey();  // 在执行其他操作之前检查和提示API key
     const inquirer = await import('inquirer').then(module => module.default);
 
     const questions = [
