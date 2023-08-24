@@ -1,4 +1,3 @@
-// import { execSync } from "child_process";
 import { HttpsProxyAgent } from "https-proxy-agent"; // 使用HttpsProxyAgent而不是HttpProxyAgent
 import { config } from "dotenv";
 import OpenAI from "openai";
@@ -9,7 +8,8 @@ import inquirer from 'inquirer';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+const currentWorkingDir = process.cwd();  // 获取当前工作目录
 config({ path: ENV_FILE_PATH });
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const PROXY_URL = "http://127.0.0.1:1087";
@@ -112,64 +112,93 @@ export async function generateMongoSchema() {
 }
 
 export async function generateCRUD(answers) {
-    console.log("Generating CRUD interface...");
-    console.log(answers)
-    const schemaDirectoryPath = path.join(__dirname, './schemas');
+  console.log("Generating CRUD interface...");
+  console.log(answers);
 
-    // 1. 使用nest g resource命令生成CRUD文件夹和基础文件
-    const resourceName = answers.resourceName || "haha"; // 假设answers中有资源名称
-    execSync(`nest g resource ${resourceName}`, { stdio: 'inherit' });  // 这会显示nest命令的输出给用户
-  
-    // 2. 询问客户用哪个schemas文件中的schemas数据定义文件
-    let chosenSchema;
+  const schemaDirectoryPath = path.join(currentWorkingDir, './schemas');
+
+  const resourceName = answers.resourceName || "haha";
+
+  const isDirectory = (path) => {
     try {
-      const schemaFiles = await fs.promises.readdir(schemaDirectoryPath);
-      const { chosenSchema: chosen } = await inquirer.prompt([
-        {
-            type: 'list',
-            name: 'chosenSchema',
-            message: '选择一个schemas数据定义文件:',
-            choices: schemaFiles
-        }
+      return fs.statSync(path).isDirectory();
+    } catch (error) {
+      return false;
+    }
+  };
+  // 1. 检查是否存在对应的文件和文件夹
+  console.log(currentWorkingDir)
+  console.log(resourceName)
+  console.log(path.join(currentWorkingDir,'src', resourceName))
+  console.log(isDirectory(path.join(currentWorkingDir,'src', resourceName)))
+  console.log(fs.existsSync(path.join(currentWorkingDir,'src', `${resourceName}.controller.ts`)))
+  console.log(fs.existsSync(path.join(currentWorkingDir, 'src',`${resourceName}.service.ts`)))
+  console.log(fs.existsSync(path.join(currentWorkingDir, 'src',`${resourceName}.module.ts`)))
+  if (
+    !isDirectory(path.join(currentWorkingDir,'src', resourceName)) ||
+    !fs.existsSync(path.join(currentWorkingDir,'src', `${resourceName}.controller.ts`)) ||
+    !fs.existsSync(path.join(currentWorkingDir, 'src',`${resourceName}.service.ts`)) ||
+    !fs.existsSync(path.join(currentWorkingDir, 'src',`${resourceName}.module.ts`))
+  ) {
+    const { shouldGenerate } = await inquirer.prompt([
+      {
+        type: 'confirm',
+        name: 'shouldGenerate',
+        message: `缺少必要的文件或文件夹，是否运行nest generate resource ${resourceName}？`
+      }
+    ]);
+  
+    if (shouldGenerate) {
+      execSync(`nest generate resource ${resourceName}`, { stdio: 'inherit' });
+    } else {
+      console.log("未创建必要的文件或文件夹，操作后再试哦。");
+      return;
+    }
+  }
+
+  // 2. 询问客户用哪个schemas文件中的schemas数据定义文件
+  let chosenSchema;
+  try {
+    const schemaFiles = await fs.promises.readdir(schemaDirectoryPath);
+    const { chosenSchema: chosen } = await inquirer.prompt([
+      {
+        type: 'list',
+        name: 'chosenSchema',
+        message: '选择一个schemas数据定义文件:',
+        choices: schemaFiles
+      }
     ]);
     chosenSchema = chosen;
   } catch (error) {
-    console.log(error)
-    console.log('could not open the schema file!')
+    console.log(error);
+    console.log('could not open the schema file!');
+    return;
   }
-  
-    // 加载所选的schemas文件
 
-    
-    const schemaContent = await fs.promises.readFile(path.join(schemaDirectoryPath, chosenSchema), 'utf8');
-    // console.log("Schema content:", schemaContent);
-  
-    // 3. 调用OPENAI API改好CRUD代码
-    // const openai = new OpenAI(/* your OpenAI setup here */);
-    const gptResponse = await openai.chat.completions.create({
-      messages: [
-        {
-          role: 'system',
-          content: 'You are a helpful assistant that helps in generating CRUD operations for NestJS based on given schema.'
-        },
-        {
-          role: 'user',
-          content: `hello`
-        }
-      ],
-      model: 'gpt-3.5-turbo'
-    });
-    console.log("GPT response:", gptResponse);
-  
-    const generatedCode = gptResponse.choices?.[0]?.message?.content?.trim();
-  
-    if (generatedCode) {
-      console.log("Generated CRUD Code:", generatedCode);
-  
-      // 4. 将 CRUD 代码保存到相应的文件或项目中 (这部分取决于你的项目结构和需求)
-      // 例如，可以保存到`./resources/${resourceName}/fileName.ts`
-      await fs.promises.writeFile(`./resources/${resourceName}/fileName.ts`, generatedCode);  
-    } else {
-      console.error("Failed to generate CRUD operations.");
-    }
+  const schemaContent = await fs.promises.readFile(path.join(schemaDirectoryPath, chosenSchema), 'utf8');
+
+  // 3. 调用OPENAI API改好CRUD代码
+  // const openai = new OpenAI(/* your OpenAI setup here */);
+  const gptResponse = await openai.chat.completions.create({
+    messages: [
+      {
+        role: 'system',
+        content: 'You are a helpful assistant that helps in generating CRUD operations for NestJS based on given schema.'
+      },
+      {
+        role: 'user',
+        content: `hello`
+      }
+    ],
+    model: 'gpt-3.5-turbo'
+  });
+
+  const generatedCode = gptResponse.choices?.[0]?.message?.content?.trim();
+
+  if (generatedCode) {
+    console.log("Generated CRUD Code:", generatedCode);
+    await fs.promises.writeFile(`./resources/${resourceName}/fileName.ts`, generatedCode);
+  } else {
+    console.error("Failed to generate CRUD operations.");
   }
+}
