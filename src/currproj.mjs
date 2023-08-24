@@ -1,13 +1,25 @@
 // import { execSync } from "child_process";
-import { HttpsProxyAgent } from "https-proxy-agent";
+import { HttpsProxyAgent } from "https-proxy-agent"; // 使用HttpsProxyAgent而不是HttpProxyAgent
 import { config } from "dotenv";
 import OpenAI from "openai";
 import { ENV_FILE_PATH } from "./openaikey.mjs";
 import fs from "fs";
+import { execSync } from 'child_process';
+import inquirer from 'inquirer';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 config({ path: ENV_FILE_PATH });
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const PROXY_URL = "http://127.0.0.1:1087";
+const agent = new HttpsProxyAgent(PROXY_URL);
+const openai = new OpenAI({
+  apiKey: OPENAI_API_KEY,
+  httpAgent: agent, // 将代理agent传递给OpenAI SDK
+});
+
+
 export async function generateMongoSchema() {
   console.log("Generating MongoDB schema...");
 
@@ -27,12 +39,6 @@ export async function generateMongoSchema() {
   ];
 
   const answers = await inquirer.prompt(questions);
-
-  const agent = new HttpsProxyAgent(PROXY_URL);
-  const openai = new OpenAI({
-    apiKey: OPENAI_API_KEY,
-    httpAgent: agent,
-  });
 
   try {
     const gptResponse = await openai.chat.completions.create({
@@ -106,9 +112,64 @@ export async function generateMongoSchema() {
 }
 
 export async function generateCRUD(answers) {
-  console.log("Generating CRUD interface...");
+    console.log("Generating CRUD interface...");
+    console.log(answers)
+    const schemaDirectoryPath = path.join(__dirname, './schemas');
 
-  // 1. 根据用户的选择生成 CRUD 接口
-  // 2. 使用 OpenAI API 获取 CRUD 示例代码
-  // 3. 将 CRUD 代码保存到相应的文件或项目中
-}
+    // 1. 使用nest g resource命令生成CRUD文件夹和基础文件
+    const resourceName = answers.resourceName || "haha"; // 假设answers中有资源名称
+    execSync(`nest g resource ${resourceName}`, { stdio: 'inherit' });  // 这会显示nest命令的输出给用户
+  
+    // 2. 询问客户用哪个schemas文件中的schemas数据定义文件
+    let chosenSchema;
+    try {
+      const schemaFiles = await fs.promises.readdir(schemaDirectoryPath);
+      const { chosenSchema: chosen } = await inquirer.prompt([
+        {
+            type: 'list',
+            name: 'chosenSchema',
+            message: '选择一个schemas数据定义文件:',
+            choices: schemaFiles
+        }
+    ]);
+    chosenSchema = chosen;
+  } catch (error) {
+    console.log(error)
+    console.log('could not open the schema file!')
+  }
+  
+    // 加载所选的schemas文件
+
+    
+    const schemaContent = await fs.promises.readFile(path.join(schemaDirectoryPath, chosenSchema), 'utf8');
+    // console.log("Schema content:", schemaContent);
+  
+    // 3. 调用OPENAI API改好CRUD代码
+    // const openai = new OpenAI(/* your OpenAI setup here */);
+    const gptResponse = await openai.chat.completions.create({
+      messages: [
+        {
+          role: 'system',
+          content: 'You are a helpful assistant that helps in generating CRUD operations for NestJS based on given schema.'
+        },
+        {
+          role: 'user',
+          content: `hello`
+        }
+      ],
+      model: 'gpt-3.5-turbo'
+    });
+    console.log("GPT response:", gptResponse);
+  
+    const generatedCode = gptResponse.choices?.[0]?.message?.content?.trim();
+  
+    if (generatedCode) {
+      console.log("Generated CRUD Code:", generatedCode);
+  
+      // 4. 将 CRUD 代码保存到相应的文件或项目中 (这部分取决于你的项目结构和需求)
+      // 例如，可以保存到`./resources/${resourceName}/fileName.ts`
+      await fs.promises.writeFile(`./resources/${resourceName}/fileName.ts`, generatedCode);  
+    } else {
+      console.error("Failed to generate CRUD operations.");
+    }
+  }
