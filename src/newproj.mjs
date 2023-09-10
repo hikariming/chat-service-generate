@@ -34,7 +34,7 @@ export async function createNewProject(answers) {
       ],
       model: "gpt-3.5-turbo", // 使用适当的模型
     });
-    console.log("GPT response:", gptResponse);
+    console.log("GPT response:", gptResponse.choices[0].message.content.trim());
 
     if (
       gptResponse.choices &&

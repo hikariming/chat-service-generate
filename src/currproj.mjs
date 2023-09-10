@@ -162,16 +162,71 @@ export async function generateCRUD(answers) {
     !fs.existsSync(moduleFile)
   ) {
     console.log(`缺少必要的文件或文件夹，请先运行nest generate resource ${resourceName}！`)
-    // const { shouldGenerate } = await inquirer.prompt([
-    //   {
-    //     type: 'confirm',
-    //     name: 'shouldGenerate',
-    //     message: `缺少必要的文件或文件夹，是否运行nest generate resource ${resourceName}？`
-    //   }
-    // ]);
   }
   console.log('文件校验完成，开始生成！')
-  // starting changing moduleFile
+  // 补全代码
+  const schemaContent = fs.readFileSync(selectedSchemaFilePath, 'utf8');
+  let moduleContent = fs.readFileSync(moduleFile, 'utf8');
+  const openai = await startOpenAI();
+
+   // 编写prompt
+   const prompt = `
+   现在有一个nest文件hello.module.ts 代码是:
+   ${moduleContent}
+   现在有一个文件${selectedSchemaFilePath}，代码是:
+   ${schemaContent}
+   帮我引入这个mongo的文件，一般方法为：
+   1、在import中加入MongooseModule和democratic2_3的import
+   2、在imports内加入相关的import
+   直接生成代码
+ `;
+
+ const gptResponse = await openai.chat.completions.create({
+  messages: [
+    {
+      role: "system",
+      content:
+        "You are a helpful assistant that can generate code.",
+    },
+    {
+      role: "user",
+      content: prompt,
+    },
+  ],
+  model: "gpt-3.5-turbo", // 使用适当的模型
+});
+const text = gptResponse.choices[0].message.content.trim()
+console.log("GPT response:", text);
+
+
+// 正则表达式用于匹配\`\`\`后的任何字符，直到另一个\`\`\`出现
+const regex = /```[\s\S]*?```/g;
+const matchedCode = text.match(regex);
+
+if (matchedCode) {
+  // 将\`\`\`和语言标识符（如typescript）从代码字符串中移除
+  const cleanedCode = matchedCode[0].replace(/```[a-zA-Z]*\n/, "").replace(/```/, "");
+  // save code to moduleContent file
+   // 打开现有的moduleFile以获取其当前内容
+   const existingModuleContent = fs.readFileSync(moduleFile, 'utf8');
+  
+   // 添加GPT-3生成的代码到现有的moduleFile内容中
+   const newModuleContent = existingModuleContent + '\n' + cleanedCode;
+ 
+   // 保存新的moduleFile内容
+   fs.writeFileSync(moduleFile, newModuleContent, 'utf8');
+   console.log(cleanedCode);
+
+ 
+   console.log("GPT-3 generated code has been saved to moduleFile");
+   
+} else {
+  console.log("No code found");
+}
+
+
+
+
 
   
 }
