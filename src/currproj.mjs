@@ -9,7 +9,8 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 
-const currentWorkingDir = process.cwd();  // 获取当前工作目录
+function startOpenAI() {
+  const currentWorkingDir = process.cwd();  // 获取当前工作目录
 config({ path: ENV_FILE_PATH });
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const PROXY_URL = "http://127.0.0.1:1087";
@@ -17,11 +18,17 @@ const agent = new HttpsProxyAgent(PROXY_URL);
 const openai = new OpenAI({
   apiKey: OPENAI_API_KEY,
   httpAgent: agent, // 将代理agent传递给OpenAI SDK
-});
+}); 
+return openai
+
+}
+
+
 
 
 export async function generateMongoSchema() {
   console.log("Generating MongoDB schema...");
+  const openai = startOpenAI()
 
   const inquirer = await import("inquirer").then((module) => module.default);
 
@@ -114,6 +121,8 @@ export async function generateMongoSchema() {
 export async function generateCRUD(answers) {
   console.log("Generating CRUD interface...");
   console.log(answers);
+  const openai = startOpenAI()
+
 
   const schemaDirectoryPath = path.join(currentWorkingDir, './schemas');
 

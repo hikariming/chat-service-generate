@@ -9,7 +9,6 @@ export const ENV_FILE_PATH = join(__dirname, '.env');
 
 export async function checkAndPromptForAPIKey() {
     const inquirer = await import('inquirer').then(module => module.default);
-
     // 如果.env文件存在，读取内容并检查是否有API_KEY
     if (fs.existsSync(ENV_FILE_PATH)) {
         const envContent = fs.readFileSync(ENV_FILE_PATH, 'utf-8');
