@@ -171,12 +171,12 @@ export async function generateCRUD(answers) {
 
    // 编写prompt
    const prompt = `
-   现在有一个nest文件hello.module.ts 代码是:
+   现在有一个nest文件${moduleFile} 代码是:
    ${moduleContent}
    现在有一个文件${selectedSchemaFilePath}，代码是:
    ${schemaContent}
    帮我引入这个mongo的文件，一般方法为：
-   1、在import中加入MongooseModule和democratic2_3的import
+   1、在import中加入MongooseModule和${selectedSchemaFilePath}的import
    2、在imports内加入相关的import
    直接生成代码
  `;
