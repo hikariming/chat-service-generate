@@ -38,7 +38,6 @@ export async function checkAndPromptForAPIKey() {
 }
 
 export async function startOpenAI() {
-    const currentWorkingDir = process.cwd();  // 获取当前工作目录
   config({ path: ENV_FILE_PATH });
   const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
   const PROXY_URL = "http://127.0.0.1:1087";

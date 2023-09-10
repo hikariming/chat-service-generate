@@ -101,12 +101,48 @@ export async function generateMongoSchema() {
 export async function generateCRUD(answers) {
   console.log("Generating CRUD interface...");
   console.log(answers);
-  const openai = startOpenAI()
 
+  const currentWorkingDir = process.cwd(); // 获取当前工作目录
+  const srcDirectoryPath = path.join(currentWorkingDir, './src');
+  const schemaDirectoryPath = path.join(currentWorkingDir, './src/schemas');
 
-  const schemaDirectoryPath = path.join(currentWorkingDir, './schemas');
+  // 获取./src下的所有nest文件夹
+  const srcFolders = fs.readdirSync(srcDirectoryPath).filter(folder => 
+    fs.statSync(path.join(srcDirectoryPath, folder)).isDirectory()
+  );
 
-  const resourceName = answers.resourceName || "haha";
+  // 获取./schemas下的所有文件
+  const schemaFiles = fs.readdirSync(schemaDirectoryPath).filter(file => 
+    fs.statSync(path.join(schemaDirectoryPath, file)).isFile()
+  );
+
+  // 创建问题数组
+  const questions = [
+    {
+      type: 'list',
+      name: 'selectedSrcFolder',
+      message: '请选择一个nest模块(如没有，则需要运行nest generate resource XXX 创建文件夹)：',
+      choices: srcFolders
+    },
+    {
+      type: 'list',
+      name: 'selectedSchemaFile',
+      message: '请选择一个schema文件：',
+      choices: schemaFiles
+    }
+  ];
+
+  // 获取用户的选择
+  const { selectedSrcFolder, selectedSchemaFile } = await inquirer.prompt(questions);
+
+  // 拼接完整路径
+  const selectedSrcFolderPath = path.join(srcDirectoryPath, selectedSrcFolder);
+  const selectedSchemaFilePath = path.join(schemaDirectoryPath, selectedSchemaFile);
+
+  // 在这里进行下一步操作
+  console.log(`选中的nest文件夹路径：${selectedSrcFolderPath}`);
+  console.log(`选中的schema文件路径：${selectedSchemaFilePath}`);
+
 
   const isDirectory = (path) => {
     try {
@@ -115,79 +151,27 @@ export async function generateCRUD(answers) {
       return false;
     }
   };
-  // 1. 检查是否存在对应的文件和文件夹
-  console.log(currentWorkingDir)
-  console.log(resourceName)
-  console.log(path.join(currentWorkingDir,'src', resourceName))
-  console.log(isDirectory(path.join(currentWorkingDir,'src', resourceName)))
-  console.log(fs.existsSync(path.join(currentWorkingDir,'src', `${resourceName}.controller.ts`)))
-  console.log(fs.existsSync(path.join(currentWorkingDir, 'src',`${resourceName}.service.ts`)))
-  console.log(fs.existsSync(path.join(currentWorkingDir, 'src',`${resourceName}.module.ts`)))
+  // // 1. 检查是否存在对应的文件和文件夹
+  const moduleFile = path.join(selectedSrcFolderPath, `${selectedSrcFolder}.module.ts`)
+  const controllerFile = path.join(selectedSrcFolderPath, `${selectedSrcFolder}.controller.ts`)
+  const serviceFile = path.join(selectedSrcFolderPath, `${selectedSrcFolder}.service.ts`)
   if (
-    !isDirectory(path.join(currentWorkingDir,'src', resourceName)) ||
-    !fs.existsSync(path.join(currentWorkingDir,'src', `${resourceName}.controller.ts`)) ||
-    !fs.existsSync(path.join(currentWorkingDir, 'src',`${resourceName}.service.ts`)) ||
-    !fs.existsSync(path.join(currentWorkingDir, 'src',`${resourceName}.module.ts`))
+    !isDirectory(selectedSrcFolderPath) ||
+    !fs.existsSync(controllerFile) ||
+    !fs.existsSync(serviceFile) ||
+    !fs.existsSync(moduleFile)
   ) {
-    const { shouldGenerate } = await inquirer.prompt([
-      {
-        type: 'confirm',
-        name: 'shouldGenerate',
-        message: `缺少必要的文件或文件夹，是否运行nest generate resource ${resourceName}？`
-      }
-    ]);
+    console.log(`缺少必要的文件或文件夹，请先运行nest generate resource ${resourceName}！`)
+    // const { shouldGenerate } = await inquirer.prompt([
+    //   {
+    //     type: 'confirm',
+    //     name: 'shouldGenerate',
+    //     message: `缺少必要的文件或文件夹，是否运行nest generate resource ${resourceName}？`
+    //   }
+    // ]);
+  }
+  console.log('文件校验完成，开始生成！')
+  // starting changing moduleFile
+
   
-    if (shouldGenerate) {
-      execSync(`nest generate resource ${resourceName}`, { stdio: 'inherit' });
-    } else {
-      console.log("未创建必要的文件或文件夹，操作后再试哦。");
-      return;
-    }
-  }
-
-  // 2. 询问客户用哪个schemas文件中的schemas数据定义文件
-  let chosenSchema;
-  try {
-    const schemaFiles = await fs.promises.readdir(schemaDirectoryPath);
-    const { chosenSchema: chosen } = await inquirer.prompt([
-      {
-        type: 'list',
-        name: 'chosenSchema',
-        message: '选择一个schemas数据定义文件:',
-        choices: schemaFiles
-      }
-    ]);
-    chosenSchema = chosen;
-  } catch (error) {
-    console.log(error);
-    console.log('could not open the schema file!');
-    return;
-  }
-
-  const schemaContent = await fs.promises.readFile(path.join(schemaDirectoryPath, chosenSchema), 'utf8');
-
-  // 3. 调用OPENAI API改好CRUD代码
-  // const openai = new OpenAI(/* your OpenAI setup here */);
-  const gptResponse = await openai.chat.completions.create({
-    messages: [
-      {
-        role: 'system',
-        content: 'You are a helpful assistant that helps in generating CRUD operations for NestJS based on given schema.'
-      },
-      {
-        role: 'user',
-        content: `hello`
-      }
-    ],
-    model: 'gpt-3.5-turbo'
-  });
-
-  const generatedCode = gptResponse.choices?.[0]?.message?.content?.trim();
-
-  if (generatedCode) {
-    console.log("Generated CRUD Code:", generatedCode);
-    await fs.promises.writeFile(`./resources/${resourceName}/fileName.ts`, generatedCode);
-  } else {
-    console.error("Failed to generate CRUD operations.");
-  }
 }
