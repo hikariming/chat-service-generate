@@ -1,6 +1,10 @@
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { join, dirname } from 'path';
+import { config } from "dotenv";
+// import { ENV_FILE_PATH } from "./openaikey.mjs";
+import OpenAI from "openai";
+import { HttpsProxyAgent } from "https-proxy-agent"; // 使用HttpsProxyAgent而不是HttpProxyAgent
 
 // 使用 import.meta.url 获取当前文件的URL，然后转换为文件路径
 const __filename = fileURLToPath(import.meta.url);
@@ -32,3 +36,17 @@ export async function checkAndPromptForAPIKey() {
     // 将API key保存到.env文件中
     fs.appendFileSync(ENV_FILE_PATH, `OPENAI_API_KEY=${answers.apiKey}\n`);
 }
+
+export async function startOpenAI() {
+    const currentWorkingDir = process.cwd();  // 获取当前工作目录
+  config({ path: ENV_FILE_PATH });
+  const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+  const PROXY_URL = "http://127.0.0.1:1087";
+  const agent = new HttpsProxyAgent(PROXY_URL);
+  const openai = new OpenAI({
+    apiKey: OPENAI_API_KEY,
+    httpAgent: agent, // 将代理agent传递给OpenAI SDK
+  }); 
+  return openai
+  }
+  

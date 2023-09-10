@@ -1,34 +1,14 @@
-import { HttpsProxyAgent } from "https-proxy-agent"; // 使用HttpsProxyAgent而不是HttpProxyAgent
-import { config } from "dotenv";
-import OpenAI from "openai";
-import { ENV_FILE_PATH } from "./openaikey.mjs";
+import { startOpenAI } from "./openaikey.mjs";
 import fs from "fs";
 import { execSync } from 'child_process';
 import inquirer from 'inquirer';
 import path from 'path';
-import { fileURLToPath } from 'url';
-
-
-function startOpenAI() {
-  const currentWorkingDir = process.cwd();  // 获取当前工作目录
-config({ path: ENV_FILE_PATH });
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-const PROXY_URL = "http://127.0.0.1:1087";
-const agent = new HttpsProxyAgent(PROXY_URL);
-const openai = new OpenAI({
-  apiKey: OPENAI_API_KEY,
-  httpAgent: agent, // 将代理agent传递给OpenAI SDK
-}); 
-return openai
-
-}
-
 
 
 
 export async function generateMongoSchema() {
   console.log("Generating MongoDB schema...");
-  const openai = startOpenAI()
+  const openai = await startOpenAI()
 
   const inquirer = await import("inquirer").then((module) => module.default);
 

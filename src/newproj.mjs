@@ -1,23 +1,7 @@
 import { execSync } from "child_process";
-import { config } from "dotenv";
-import { ENV_FILE_PATH } from "./openaikey.mjs";
-import OpenAI from "openai";
-import { HttpsProxyAgent } from "https-proxy-agent"; // 使用HttpsProxyAgent而不是HttpProxyAgent
 import { spawn } from "child_process";
+import { startOpenAI } from "./openaikey.mjs";
 
-function startOpenAI() {
-  const currentWorkingDir = process.cwd();  // 获取当前工作目录
-config({ path: ENV_FILE_PATH });
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-const PROXY_URL = "http://127.0.0.1:1087";
-const agent = new HttpsProxyAgent(PROXY_URL);
-const openai = new OpenAI({
-  apiKey: OPENAI_API_KEY,
-  httpAgent: agent, // 将代理agent传递给OpenAI SDK
-}); 
-return openai
-
-}
 
 export async function createNewProject(answers) {
   console.log("Creating new project...");
@@ -31,7 +15,7 @@ export async function createNewProject(answers) {
     );
     return;
   }
-  const openai = startOpenAI()
+  const openai = await startOpenAI()
 
   
   try {

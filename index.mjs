@@ -61,6 +61,5 @@ async function main() {
     }
     // generateService(answers);
 }
-console.log('1111')
 
 main();
